@@ -7,6 +7,9 @@ on:
 jobs:
   add-to-sheet:
     runs-on: ubuntu-latest
+    env:
+      CI: true
+      AGRICOLA_NOTIFICATION_CHANNEL_WEB_HOOK: ${{ secrets.AGRICOLA_NOTIFICATION_CHANNEL_WEB_HOOK }}
     steps:
       - uses: actions/checkout@v2
       - run: npm install

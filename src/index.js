@@ -6,8 +6,7 @@ const fs = require("fs");
 const gameId = `3851196`;
 const gameLink = `http://www.boiteajeux.net/jeux/agr/partie.php?id=${gameId}`;
 
-const playerIdMap = { 'lpoulter': 'U01PMMBSQSF', 'solon': 'U01PMMBSQSF' }
-
+const playerIdMap = { 'lpoulter': 'U01PMMBSQSF', 'solon': 'U01P6U9RYDV', 'attrill20': 'U01PJJZD5J9', 'EvilBen': 'U01PF1BR2AJ' }
 
 let lastPlayedData = fs.readFileSync('last-played.json');
 let { lastPlayed } = JSON.parse(lastPlayedData);

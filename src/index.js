@@ -10,7 +10,7 @@ const playerIdMap = { 'lpoulter': 'U01PMMBSQSF', 'solon': 'U01PMMBSQSF' }
 
 
 let lastPlayedData = fs.readFileSync('last-played.json');
-let lastPlayed = JSON.parse(lastPlayedData);
+let { lastPlayed } = JSON.parse(lastPlayedData);
 
 https: axios
   .get(gameLink)
@@ -36,6 +36,7 @@ https: axios
   }
 
     if(nextPlayer !== lastPlayed) {
+      console.log(`sending notification: nextPlayer: ${nextPlayer}, lastPlayed: ${lastPlayed} userId${userId}`)
         axios.post(
           process.env.AGRICOLA_NOTIFICATION_CHANNEL_WEB_HOOK,       
             { text: `${nextPlayer} <@${userId}>` }

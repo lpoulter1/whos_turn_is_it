@@ -38,7 +38,7 @@ https: axios
     if(nextPlayer !== lastPlayed) {
         axios.post(
           process.env.AGRICOLA_NOTIFICATION_CHANNEL_WEB_HOOK,       
-            { text: `${nextPlayer} <@${$userId}>` }
+            { text: `${nextPlayer} <@${userId}>` }
           );
     } else {
       console.log('same player not notifiying')

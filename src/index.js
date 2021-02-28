@@ -1,4 +1,4 @@
-// require('dotenv').config()
+require('dotenv').config()
 const axios = require("axios").default;
 const cheerio = require("cheerio");
 const fs = require("fs");
@@ -6,7 +6,7 @@ const fs = require("fs");
 const gameId = `3851196`;
 const gameLink = `http://www.boiteajeux.net/jeux/agr/partie.php?id=${gameId}`;
 
-const playerIdMap = { 'lpoulter': 'U01PMMBSQSF' }
+const playerIdMap = { 'lpoulter': 'U01PMMBSQSF', 'solon': 'U01PMMBSQSF' }
 
 
 let lastPlayedData = fs.readFileSync('last-played.json');
@@ -17,6 +17,13 @@ https: axios
   .then(function(response) {
     const $ = cheerio.load(response.data);
     const nextPlayer = $(".clInfo").text();
+    let userId = '';
+    const players = Object.keys(playerIdMap);
+    players.map(player => {
+      if(nextPlayer.toLowerCase().includes(player)) {
+        userId = playerIdMap[player]
+      }
+    })
 
   try {
     fs.writeFileSync(
@@ -31,7 +38,7 @@ https: axios
     if(nextPlayer !== lastPlayed) {
         axios.post(
           process.env.AGRICOLA_NOTIFICATION_CHANNEL_WEB_HOOK,       
-            { text: `${nextPlayer} <@U01PMMBSQSF>` }
+            { text: `${nextPlayer} <@${$userId}>` }
           );
     } else {
       console.log('same player not notifiying')

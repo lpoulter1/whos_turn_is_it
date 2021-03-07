@@ -3,7 +3,7 @@ const axios = require("axios").default;
 const cheerio = require("cheerio");
 const fs = require("fs");
 
-const gameId = `3851196`;
+const gameId = `3853843`;
 const gameLink = `http://www.boiteajeux.net/jeux/agr/partie.php?id=${gameId}`;
 
 const playerIdMap = {

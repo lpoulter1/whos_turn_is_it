@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "checkTurn": "node src/index.js",
-    "start": "pm2 start src/index.js"
+    "start": "pm2 start src/index.js --log-date-format 'DD-MM HH:mm:ss.SSS'",
+    "stop": "pm2 stop all",
+    "log": "pm2 log"
   },
   "keywords": [],
   "author": "",

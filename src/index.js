@@ -53,7 +53,7 @@ function scrape() {
           console.log(
             `sending notification: nextPlayer: ${nextPlayer}, lastPlayed: ${lastPlayed} userId${userId}`
           );
-          axios.post(process.env.AGRICOLA_NOTIFICATION_CHANNEL_WEB_HOOK, {
+          axios.post(process.env.TEST_CHANNEL_WEB_HOOK, {
             text: `${nextPlayer} <@${userId}>`,
           });
         } else {

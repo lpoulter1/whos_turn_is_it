@@ -13,24 +13,37 @@ const playerIdMap = {
   attrill20: "U01PJJZD5J9",
   evilben: "U01PF1BR2AJ",
   jasperb: "U01QF5SH90S",
+  boardello: "U01QH19H3MG",
 };
 
-const games = ["3856082", "3853843"];
+const games = ["3856082", "3853843", "3856020"];
 
 function scrape() {
   games.map(async (gameId) => {
     await sleep(30000);
-    console.log(`Scrapeing game ${gameId} `);
+    console.log(`Scraping game ${gameId} `);
     const gameLink = `http://www.boiteajeux.net/jeux/agr/partie.php?id=${gameId}`;
     const fileName = `last-played-${gameId}.json`;
-    let lastPlayedData = fs.readFileSync(fileName);
-    let { lastPlayed } = JSON.parse(lastPlayedData);
+
+    let lastPlayedData;
+    try {
+      lastPlayedData = fs.readFileSync(fileName);
+    } catch (error) {
+      console.log(`Creating JSON file for game ${gameId} `);
+      fs.writeFileSync(fileName, JSON.stringify({ lastPlayed: "" }));
+    }
+
+    let { lastPlayed = "" } = JSON.parse(lastPlayedData);
 
     https: axios
       .get(gameLink)
       .then(function(response) {
         const $ = cheerio.load(response.data);
         const nextPlayer = $(".clInfo").text();
+        const { gameName } = $("#dvEnteteInfo")
+          .text()
+          .match(/"(?<gameName>.*?)"/).groups;
+
         let userId = "";
         const players = Object.keys(playerIdMap);
         players.map((player) => {
@@ -53,8 +66,8 @@ function scrape() {
           console.log(
             `sending notification: nextPlayer: ${nextPlayer}, lastPlayed: ${lastPlayed} userId${userId}`
           );
-          axios.post(process.env.TEST_CHANNEL_WEB_HOOK, {
-            text: `${nextPlayer} <@${userId}>`,
+          axios.post(process.env.AGRICOLA_NOTIFICATION_CHANNEL_WEB_HOOK, {
+            text: `Game: ${gameName} \n ${nextPlayer} <@${userId}>`,
           });
         } else {
           console.log(`same player ${nextPlayer} not notifiying`);

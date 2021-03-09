@@ -14,6 +14,7 @@ const playerIdMap = {
   evilben: "U01PF1BR2AJ",
   jasperb: "U01QF5SH90S",
   boardello: "U01QH19H3MG",
+  hehasmoments: "U01QUCAEWQL",
 };
 
 const games = ["3856082", "3853843", "3856020"];

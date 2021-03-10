@@ -48,8 +48,12 @@ function scrape() {
         let userId = "";
         const players = Object.keys(playerIdMap);
         players.map((player) => {
+          console.log('finding player ', player);
+          console.log('nextPlayer.toLowerCase()', nextPlayer.toLowerCase());
           if (nextPlayer.toLowerCase().includes(player)) {
             userId = playerIdMap[player];
+          } else {
+            console.log('No match found for ', nextPlayer.toLowerCase());
           }
         });
 

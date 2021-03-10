@@ -15,9 +15,10 @@ const playerIdMap = {
   jasperb: "U01QF5SH90S",
   boardello: "U01QH19H3MG",
   hehasmoments: "U01QUCAEWQL",
+  peskygekko: "U01QQJ4HDNH"
 };
 
-const games = ["3856082", "3853843", "3856020"];
+const games = ["3856082", "3853843", "3856020", "3858350"];
 
 function scrape() {
   games.map(async (gameId) => {

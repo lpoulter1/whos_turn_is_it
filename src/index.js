@@ -7,6 +7,17 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function getDraftTableData($) {
+  const draftTable = $("span:contains('Draft')").closest("table");
+  $(draftTable)
+    .find("tbody tr")
+    .each((i, tr) => {
+      const $th = $(tr).find("th");
+      const $td = $(tr).find("td");
+      console.log(`${$th.text()} ${$td.text()}`);
+    });
+}
+
 const playerIdMap = {
   lpoulter: "U01PMMBSQSF",
   solon: "U01P6U9RYDV",
@@ -15,7 +26,7 @@ const playerIdMap = {
   jasperb: "U01QF5SH90S",
   boardello: "U01QH19H3MG",
   hehasmoments: "U01QUCAEWQL",
-  peskygekko: "U01QQJ4HDNH"
+  peskygekko: "U01QQJ4HDNH",
 };
 
 const games = ["3856082", "3853843", "3856020", "3858350"];
@@ -49,12 +60,12 @@ function scrape() {
         let userId = "";
         const players = Object.keys(playerIdMap);
         players.map((player) => {
-          console.log('finding player ', player);
-          console.log('nextPlayer.toLowerCase()', nextPlayer.toLowerCase());
+          console.log("finding player ", player);
+          console.log("nextPlayer.toLowerCase()", nextPlayer.toLowerCase());
           if (nextPlayer.toLowerCase().includes(player)) {
             userId = playerIdMap[player];
           } else {
-            console.log('No match found for ', nextPlayer.toLowerCase());
+            console.log("No match found for ", nextPlayer.toLowerCase());
           }
         });
 

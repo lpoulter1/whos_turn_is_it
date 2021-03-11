@@ -27,6 +27,9 @@ const playerIdMap = {
   boardello: "U01QH19H3MG",
   hehasmoments: "U01QUCAEWQL",
   peskygekko: "U01QQJ4HDNH",
+  jonnydl: "U01RLSYG8SU",
+  circadia: "U01R35GC9HS",
+  tf13041: "U01QX3F75EF",
 };
 
 const games = ["3856082", "3853843", "3856020", "3858350"];

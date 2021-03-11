@@ -7,15 +7,84 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function getGameName($) {
+  const match = $("#dvEnteteInfo")
+    .text()
+    .match(/"(?<gameName>.*?)"/);
+
+  if (!match) {
+    console.log("no game name found");
+    gameName = "The game with no name";
+  } else {
+    gameName = match.groups.gameName;
+  }
+
+  return gameName;
+}
+function notifyDraftRoundStarted($, lastPlayed, fileName, gameName) {
+  const tableData = getDraftTableData($);
+
+  const notificationString = tableData.map((row, index) => {
+    const [th, td] = row;
+    if (index === 0) {
+      return `${th}: ${td}`;
+    }
+    const userId = mapBoiteajeuxToSlackId(row[0]);
+    return `<@${userId}>, ${row[1]}`;
+  });
+
+  console.log("notificationString", notificationString);
+
+  const [currentRoundNumber] = notificationString;
+  console.log("lastPlayed", lastPlayed);
+  console.log("currentRoundNumber", currentRoundNumber);
+  if (currentRoundNumber !== lastPlayed) {
+    console.log("updating to round number: ", currentRoundNumber);
+    try {
+      fs.writeFileSync(
+        fileName,
+        JSON.stringify({ lastPlayed: currentRoundNumber })
+      );
+      console.log("Draft json updated");
+    } catch (e) {
+      console.error(`Updating Draft json failed: `, e);
+    }
+
+    console.log(`sending draft notification`);
+
+    axios.post(process.env.AGRICOLA_NOTIFICATION_CHANNEL_WEB_HOOK, {
+      text: `${gameName} \n ${notificationString.join("\n")}`,
+    });
+  } else {
+    console.log(`same round ${currentRoundNumber} not notifiying`);
+  }
+}
+
 function getDraftTableData($) {
   const draftTable = $("span:contains('Draft')").closest("table");
+  if (draftTable.length === 0) {
+    return console.log("not drafting");
+  }
+  console.log("is drafting");
+  let tableData = [];
   $(draftTable)
     .find("tbody tr")
     .each((i, tr) => {
       const $th = $(tr).find("th");
       const $td = $(tr).find("td");
-      console.log(`${$th.text()} ${$td.text()}`);
+      tableData.push([
+        $th
+          .text()
+          .trim()
+          .toLowerCase(),
+        $td
+          .text()
+          .trim()
+          .toLowerCase(),
+      ]);
     });
+
+  return tableData;
 }
 
 const playerIdMap = {
@@ -32,7 +101,19 @@ const playerIdMap = {
   tf13041: "U01QX3F75EF",
 };
 
-const games = ["3856082", "3853843", "3856020", "3858350"];
+function mapBoiteajeuxToSlackId(boiteajeuxString) {
+  const slackIdKey = Object.keys(playerIdMap).find((player) => {
+    return boiteajeuxString.toLowerCase().includes(player);
+  });
+
+  if (!slackIdKey) {
+    console.log("Slack User not found in String: ", boiteajeuxString);
+  }
+
+  return playerIdMap[slackIdKey] || "";
+}
+
+const games = ["3856082", "3853843", "3856020", "3858350", "3858814"];
 
 function scrape() {
   games.map(async (gameId) => {
@@ -55,20 +136,21 @@ function scrape() {
       .get(gameLink)
       .then(function(response) {
         const $ = cheerio.load(response.data);
+
+        const draftTable = $("span:contains('Draft')").closest("table");
+        const gameName = getGameName($);
+
+        if (draftTable.length > 0) {
+          return notifyDraftRoundStarted($, lastPlayed, fileName, gameName);
+        }
+
         const nextPlayer = $(".clInfo").text();
-        const { gameName } = $("#dvEnteteInfo")
-          .text()
-          .match(/"(?<gameName>.*?)"/).groups;
 
         let userId = "";
         const players = Object.keys(playerIdMap);
         players.map((player) => {
-          console.log("finding player ", player);
-          console.log("nextPlayer.toLowerCase()", nextPlayer.toLowerCase());
           if (nextPlayer.toLowerCase().includes(player)) {
             userId = playerIdMap[player];
-          } else {
-            console.log("No match found for ", nextPlayer.toLowerCase());
           }
         });
 
@@ -86,7 +168,7 @@ function scrape() {
           console.log(
             `sending notification: nextPlayer: ${nextPlayer}, lastPlayed: ${lastPlayed} userId${userId}`
           );
-          axios.post(process.env.AGRICOLA_NOTIFICATION_CHANNEL_WEB_HOOK, {
+          axios.post(process.env.TEST_CHANNEL_WEB_HOOK, {
             text: `Game: ${gameName} \n ${nextPlayer} <@${userId}>`,
           });
         } else {

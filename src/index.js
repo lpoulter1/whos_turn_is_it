@@ -113,7 +113,20 @@ function mapBoiteajeuxToSlackId(boiteajeuxString) {
   return playerIdMap[slackIdKey] || "";
 }
 
-const games = ["3856082", "3853843", "3856020", "3858350", "3858814"];
+function isGameOver($) {
+  return $(".clTexteFort:contains('won by')").length > 0;
+}
+
+function ($) {
+  return $(".clTexteFort:contains('won by')").text();
+}
+
+function isDrafting($) {
+  const draftTable = $("span:contains('Draft')").closest("table");
+  return draftTable.length > 0;
+}
+
+const games = ["3856082", "3853843", "3856020", "3858350", "3860604"];
 
 function scrape() {
   games.map(async (gameId) => {
@@ -137,14 +150,22 @@ function scrape() {
       .then(function(response) {
         const $ = cheerio.load(response.data);
 
-        const draftTable = $("span:contains('Draft')").closest("table");
+        if(isGameOver($)) {
+          console.log('game over ', getWinner($))
+        }
+
         const gameName = getGameName($);
 
-        if (draftTable.length > 0) {
+        if (isDrafting($)) {
           return notifyDraftRoundStarted($, lastPlayed, fileName, gameName);
         }
 
         const nextPlayer = $(".clInfo").text();
+
+        if (!nextPlayer) {
+          console.log("No next player found");
+          return;
+        }
 
         let userId = "";
         const players = Object.keys(playerIdMap);
@@ -169,7 +190,7 @@ function scrape() {
             `sending notification: nextPlayer: ${nextPlayer}, lastPlayed: ${lastPlayed} userId${userId}`
           );
           axios.post(process.env.AGRICOLA_NOTIFICATION_CHANNEL_WEB_HOOK, {
-            text: `Game: ${gameName} \n ${nextPlayer} <@${userId}>`,
+            text: `${nextPlayer} \n <${gameLink}|Game: ${gameName} ↗️> \n <@${userId}>`,
           });
         } else {
           console.log(`same player ${nextPlayer} not notifiying`);

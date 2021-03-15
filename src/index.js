@@ -21,7 +21,7 @@ function getGameName($) {
 
   return gameName;
 }
-function notifyDraftRoundStarted($, lastPlayed, fileName, gameName) {
+function notifyDraftRoundStarted($, lastPlayed, fileName, gameName, gameLink) {
   const tableData = getDraftTableData($);
 
   const notificationString = tableData.map((row, index) => {
@@ -53,7 +53,9 @@ function notifyDraftRoundStarted($, lastPlayed, fileName, gameName) {
     console.log(`sending draft notification`);
 
     axios.post(process.env.AGRICOLA_NOTIFICATION_CHANNEL_WEB_HOOK, {
-      text: `${gameName} \n ${notificationString.join("\n")}`,
+      text: `<${gameLink}|Game: ${gameName} ↗️> \n ${notificationString.join(
+        "\n"
+      )}`,
     });
   } else {
     console.log(`same round ${currentRoundNumber} not notifiying`);
@@ -99,6 +101,9 @@ const playerIdMap = {
   jonnydl: "U01RLSYG8SU",
   circadia: "U01R35GC9HS",
   tf13041: "U01QX3F75EF",
+  sixtyten: "U01R5JV23EH",
+  nemamiah: "not on slack",
+  rusefus:  "U01R8MFEHAN"
 };
 
 function mapBoiteajeuxToSlackId(boiteajeuxString) {
@@ -117,7 +122,7 @@ function isGameOver($) {
   return $(".clTexteFort:contains('won by')").length > 0;
 }
 
-function ($) {
+function getWinner($) {
   return $(".clTexteFort:contains('won by')").text();
 }
 
@@ -126,7 +131,24 @@ function isDrafting($) {
   return draftTable.length > 0;
 }
 
-const games = ["3856082", "3853843", "3856020", "3858350", "3860604"];
+function writeJsonToDisk(json) {
+  try {
+    fs.writeFileSync(fileName, JSON.stringify(json));
+  } catch (e) {
+    console.error(`Failed writing json: `, json);
+  }
+}
+
+function writeLastPlayedToDisk(lastPlayed) {}
+
+const games = [
+  "3856082",
+  "3853843",
+  "3856020",
+  "3858350",
+  "3860604",
+  "3858814",
+];
 
 function scrape() {
   games.map(async (gameId) => {
@@ -150,14 +172,20 @@ function scrape() {
       .then(function(response) {
         const $ = cheerio.load(response.data);
 
-        if(isGameOver($)) {
-          console.log('game over ', getWinner($))
+        if (isGameOver($)) {
+          console.log("game over ", getWinner($));
         }
 
         const gameName = getGameName($);
 
         if (isDrafting($)) {
-          return notifyDraftRoundStarted($, lastPlayed, fileName, gameName);
+          return notifyDraftRoundStarted(
+            $,
+            lastPlayed,
+            fileName,
+            gameName,
+            gameLink
+          );
         }
 
         const nextPlayer = $(".clInfo").text();

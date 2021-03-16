@@ -102,8 +102,8 @@ const playerIdMap = {
   circadia: "U01R35GC9HS",
   tf13041: "U01QX3F75EF",
   sixtyten: "U01R5JV23EH",
-  nemamiah: "not on slack",
-  rusefus:  "U01R8MFEHAN"
+  nemamiah: "U01RC031AE9",
+  rusefus: "U01R8MFEHAN",
 };
 
 function mapBoiteajeuxToSlackId(boiteajeuxString) {
@@ -148,6 +148,7 @@ const games = [
   "3858350",
   "3860604",
   "3858814",
+  "3861295",
 ];
 
 function scrape() {

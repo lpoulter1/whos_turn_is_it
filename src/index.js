@@ -21,6 +21,7 @@ function getGameName($) {
 
   return gameName;
 }
+
 function notifyDraftRoundStarted($, lastPlayed, fileName, gameName, gameLink) {
   const tableData = getDraftTableData($);
 
@@ -40,15 +41,7 @@ function notifyDraftRoundStarted($, lastPlayed, fileName, gameName, gameLink) {
   console.log("currentRoundNumber", currentRoundNumber);
   if (currentRoundNumber !== lastPlayed) {
     console.log("updating to round number: ", currentRoundNumber);
-    try {
-      fs.writeFileSync(
-        fileName,
-        JSON.stringify({ lastPlayed: currentRoundNumber })
-      );
-      console.log("Draft json updated");
-    } catch (e) {
-      console.error(`Updating Draft json failed: `, e);
-    }
+    writeLastPlayedToDisk(fileName, currentRoundNumber);
 
     console.log(`sending draft notification`);
 
@@ -104,6 +97,9 @@ const playerIdMap = {
   sixtyten: "U01R5JV23EH",
   nemamiah: "U01RC031AE9",
   rusefus: "U01R8MFEHAN",
+  spjmacleod: "U01S3QY3ADB",
+  hilson: "U01SJRG22S1",
+  cacoethesvictor: "U01SV6F7ECS"
 };
 
 function mapBoiteajeuxToSlackId(boiteajeuxString) {
@@ -131,24 +127,22 @@ function isDrafting($) {
   return draftTable.length > 0;
 }
 
-function writeJsonToDisk(json) {
+function writeLastPlayedToDisk(fileName, lastPlayed = "") {
   try {
-    fs.writeFileSync(fileName, JSON.stringify(json));
-  } catch (e) {
-    console.error(`Failed writing json: `, json);
+    fs.writeFileSync(fileName, JSON.stringify({ lastPlayed }));
+    console.log("Last played json updated");
+  } catch (error) {
+    console.error(`Updating player json failed: `, e);
   }
 }
 
-function writeLastPlayedToDisk(lastPlayed) {}
-
 const games = [
-  "3856082",
-  "3853843",
   "3856020",
   "3858350",
-  "3860604",
-  "3858814",
-  "3861295",
+  "3870210",
+  "3869972",
+  "3870282",
+  "3876281"
 ];
 
 function scrape() {
@@ -159,11 +153,12 @@ function scrape() {
     const fileName = `last-played-${gameId}.json`;
 
     let lastPlayedData;
+
     try {
       lastPlayedData = fs.readFileSync(fileName);
     } catch (error) {
       console.log(`Creating JSON file for game ${gameId} `);
-      fs.writeFileSync(fileName, JSON.stringify({ lastPlayed: "" }));
+      writeLastPlayedToDisk(fileName, "");
     }
 
     let { lastPlayed = "" } = JSON.parse(lastPlayedData);
@@ -172,12 +167,20 @@ function scrape() {
       .get(gameLink)
       .then(function(response) {
         const $ = cheerio.load(response.data);
+        const gameName = getGameName($);
 
         if (isGameOver($)) {
-          console.log("game over ", getWinner($));
+          const winnerString = getWinner($);
+          if (winnerString !== lastPlayed) {
+            console.log("game over ", winnerString);
+            writeLastPlayedToDisk(fileName, winnerString);
+            axios.post(process.env.AGRICOLA_CHANNEL_WEB_HOOK, {
+              text: `🏆 *${gameName}*: *${winnerString}* 🏆`,
+            });
+          } else {
+            console.log('Winner already notified, delete the game Id');
+          }
         }
-
-        const gameName = getGameName($);
 
         if (isDrafting($)) {
           return notifyDraftRoundStarted(
@@ -204,15 +207,7 @@ function scrape() {
           }
         });
 
-        try {
-          fs.writeFileSync(
-            fileName,
-            JSON.stringify({ lastPlayed: nextPlayer })
-          );
-          console.log("Last played json updated");
-        } catch (e) {
-          console.error(`Updating player json failed: `, e);
-        }
+        writeLastPlayedToDisk(fileName, nextPlayer);
 
         if (nextPlayer !== lastPlayed) {
           console.log(

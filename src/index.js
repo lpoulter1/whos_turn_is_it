@@ -139,7 +139,6 @@ function writeLastPlayedToDisk(fileName, lastPlayed = "") {
 const games = [
   "3856020",
   "3858350",
-  "3870210",
   "3869972",
   "3870282",
   "3876281"

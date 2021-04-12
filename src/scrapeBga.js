@@ -3,6 +3,33 @@ const fs = require("fs");
 const puppeteer = require("puppeteer");
 const axios = require("axios").default;
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+const playerIdMap = {
+  lpoulter: "U01PMMBSQSF",
+  rusefus: "U01R8MFEHAN",
+  cacoethesvictor: "U01SV6F7ECS",
+  drtim84: "U01QX3F75EF",
+  ["zapp brannigan1"]: "U01TZTZMHFD",
+  laplange: "U01TT5S9HAS",
+};
+
+const gameIds = ["163263601", "162693887"];
+
+function mapNextPlayerStringToSlackId(nextPlayerString) {
+  const slackIdKey = Object.keys(playerIdMap).find((player) => {
+    return nextPlayerString.toLowerCase().includes(player);
+  });
+
+  if (!slackIdKey) {
+    console.log("Slack User not found in String: ", nextPlayerString);
+  }
+
+  return playerIdMap[slackIdKey] || "Not on Slack";
+}
+
 function writeLastPlayedToDisk(fileName, lastPlayed = "") {
   try {
     fs.writeFileSync(fileName, JSON.stringify({ lastPlayed }));
@@ -27,10 +54,9 @@ function getLastPlayed({ tableId, fileName }) {
   return lastPlayed;
 }
 
-(async () => {
-  const browser = await puppeteer.launch();
+async function getGameData(browser, tableId) {
+  console.log("Scraping game:", tableId);
   const page = await browser.newPage();
-  const tableId = "162693887";
   const fileName = `last-played-terra-mystica-${tableId}.json`;
   const gameUrl = `https://boardgamearena.com/9/terramystica?table=${tableId}`;
   await page.goto(gameUrl);
@@ -42,12 +68,67 @@ function getLastPlayed({ tableId, fileName }) {
     return turnString;
   });
 
+  const activePlayers = await page.evaluate(() => {
+    function getActivePlayers() {
+      function isHidden(el) {
+        return el && el.offsetParent === null;
+      }
+
+      const playerBoards = Array.from(
+        document.querySelectorAll(".player_board_inner")
+      );
+
+      let activePlayers = [];
+      for (const playerBoard of playerBoards) {
+        const name =
+          playerBoard.querySelector(".player-name") &&
+          playerBoard.querySelector(".player-name").innerText;
+        if (!name) {
+          activePlayers = activePlayers;
+        } else {
+          const isActive = !isHidden(
+            playerBoard.querySelector(".avatar_active").parentNode
+          );
+
+          if (isActive) activePlayers.push(name);
+        }
+      }
+
+      return activePlayers;
+    }
+
+    return getActivePlayers();
+  });
+
+  console.log("active players: ", activePlayers);
+  console.log(`nextPlayer: ${nextPlayer} for game ${tableId}`);
+
   if (nextPlayer !== lastPlayed) {
+    const userIds = activePlayers
+      .map((playerName) => mapNextPlayerStringToSlackId(playerName))
+      .filter((userId) => !lastPlayed.includes(userId));
+    console.log("userIds", userIds);
+    const userIdString = userIds.join("\n");
+    const gameName = "terra-mystica";
+
     writeLastPlayedToDisk(fileName, nextPlayer);
     axios.post(process.env.TEST_CHANNEL_WEB_HOOK, {
-      text: `${nextPlayer} \n ${gameUrl}`,
+      text: `*${nextPlayer}* \n <${gameUrl}|Game: ${gameName} ↗️> \n <@${userIdString}>`,
     });
   }
+}
 
+const getAllGameData = async (browser) => {
+  return Promise.all(gameIds.map((tableId) => getGameData(browser, tableId)));
+};
+
+(async () => {
+  const browser = await puppeteer.launch({
+    args: ["--no-sandbox", "--disable-setuid-sandbox"],
+  });
+
+  await getAllGameData(browser);
+  console.log("closing browser");
   await browser.close();
+  await sleep(30000);
 })();

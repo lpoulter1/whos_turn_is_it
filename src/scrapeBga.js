@@ -16,7 +16,7 @@ const playerIdMap = {
   laplange: "U01TT5S9HAS",
 };
 
-const gameIds = ["163263601", "162693887"];
+const gameIds = ["163263601", "163847032"];
 
 function mapNextPlayerStringToSlackId(nextPlayerString) {
   const slackIdKey = Object.keys(playerIdMap).find((player) => {
@@ -105,15 +105,15 @@ async function getGameData(browser, tableId) {
 
   if (nextPlayer !== lastPlayed) {
     const userIds = activePlayers
-      .map((playerName) => mapNextPlayerStringToSlackId(playerName))
-      .filter((userId) => !lastPlayed.includes(userId));
-    console.log("userIds", userIds);
-    const userIdString = userIds.join("\n");
+      .filter((playerName) => !lastPlayed.includes(playerName))
+      .map((playerName) => mapNextPlayerStringToSlackId(playerName));
+
+    const userIdString = userIds.map(id => `<@${id}> \n`);
     const gameName = "terra-mystica";
 
     writeLastPlayedToDisk(fileName, nextPlayer);
-    axios.post(process.env.TEST_CHANNEL_WEB_HOOK, {
-      text: `*${nextPlayer}* \n <${gameUrl}|Game: ${gameName} ↗️> \n <@${userIdString}>`,
+    axios.post(process.env.AGRICOLA_NOTIFICATION_CHANNEL_WEB_HOOK, {
+      text: `*${nextPlayer}* \n <${gameUrl}|Game: ${gameName} ↗️> \n ${userIdString}`,
     });
   }
 }

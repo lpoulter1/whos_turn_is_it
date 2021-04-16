@@ -3,10 +3,6 @@ const fs = require("fs");
 const puppeteer = require("puppeteer");
 const axios = require("axios").default;
 
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 const playerIdMap = {
   lpoulter: "U01PMMBSQSF",
   rusefus: "U01R8MFEHAN",
@@ -130,5 +126,4 @@ const getAllGameData = async (browser) => {
   await getAllGameData(browser);
   console.log("closing browser");
   await browser.close();
-  await sleep(30000);
 })();

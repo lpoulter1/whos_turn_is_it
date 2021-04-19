@@ -12,7 +12,7 @@ const playerIdMap = {
   laplange: "U01TT5S9HAS",
 };
 
-const gameIds = ["163263601", "163847032"];
+const gameIds = ["165264076", "165491488"];
 
 function mapNextPlayerStringToSlackId(nextPlayerString) {
   const slackIdKey = Object.keys(playerIdMap).find((player) => {
@@ -55,8 +55,13 @@ async function getGameData(browser, tableId) {
   const page = await browser.newPage();
   const fileName = `last-played-terra-mystica-${tableId}.json`;
   const gameUrl = `https://boardgamearena.com/9/terramystica?table=${tableId}`;
-  await page.goto(gameUrl);
-  await page.waitForSelector("#pagemaintitletext");
+  try {
+    await page.goto(gameUrl);
+    await page.waitForSelector("#pagemaintitletext");
+  } catch (error) {
+    console.log(error);
+    return;
+  }
 
   const lastPlayed = getLastPlayed({ tableId, fileName });
   const nextPlayer = await page.evaluate(() => {
@@ -104,7 +109,7 @@ async function getGameData(browser, tableId) {
       .filter((playerName) => !lastPlayed.includes(playerName))
       .map((playerName) => mapNextPlayerStringToSlackId(playerName));
 
-    const userIdString = userIds.map(id => `<@${id}> \n`);
+    const userIdString = userIds.map((id) => `<@${id}> \n`);
     const gameName = "terra-mystica";
 
     writeLastPlayedToDisk(fileName, nextPlayer);
